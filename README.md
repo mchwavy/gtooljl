@@ -2,11 +2,18 @@
 
 This package reads and writes Gtool3 format files.
 
+# Install
+In Julia,
+```
+julia> ]
+pkg> add https://github.com/mchwavy/gtooljl.git
+```
+
 # Usage
 
 To read header information,
 ```
-using gtool
+using gtoolgl
 
 dir = "."
 varname = "occo2f"
@@ -20,6 +27,8 @@ chead = readchead( f )
 To read data,
 
 ```
+using gtoolgl
+
 dir = "."
 varname = "occo2f"
 
@@ -29,6 +38,8 @@ readgtool uses opengtool.
 
 To write,
 ```
+using gtoolgl
+
 f = opengtool( filename, "w" )
 
 nxyz = nx * ny * nz
