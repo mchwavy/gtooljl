@@ -11,13 +11,10 @@ using gtool
 dir = "."
 varname = "occo2f"
 
-nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( dir, varname )
-
 filename = dir * "/" * varname
 f = opengtool( filename, "r" )
 chead = readchead( f )
 ```
-
 
 
 To read data,
@@ -28,6 +25,7 @@ varname = "occo2f"
 
 nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( dir, varname )
 ```
+readgtool uses opengtool.
 
 To write,
 ```
