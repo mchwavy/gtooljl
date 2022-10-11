@@ -1,6 +1,7 @@
 # gtooljl
 
 This package reads and writes Gtool3 format files.
+It supports UR4 UR8 MR4 MR8 formats.
 
 # Install
 In Julia,
