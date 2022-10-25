@@ -14,7 +14,7 @@ pkg> add https://github.com/mchwavy/gtooljl.git
 
 To read header information,
 ```
-using gtoolgl
+using gtooljl
 
 dir = "."
 varname = "occo2f"
@@ -29,7 +29,7 @@ To read data, you need the ngtstat command, which was developed to handle gtool3
 First pecify the directory containing the axis data files in advance in the GTAXDIR environment variable.
 
 ```
-using gtoolgl
+using gtooljl
 
 dir = "."
 varname = "occo2f"
@@ -41,7 +41,7 @@ readgtool uses opengtool and readchead internally, and reads axis files.
 
 To write,
 ```
-using gtoolgl
+using gtooljl
 
 f = opengtool( filename, "w" )
 
