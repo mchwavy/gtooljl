@@ -409,9 +409,9 @@ function readchead( f )
     return chead
 end
 
-function readgtool( dir, varname )
+function readgtool( filename )
 
-    filename = dir * "/" * varname
+#    filename = dir * "/" * varname
 
     ngtsString = read( pipeline( `ngtstat $filename` , `tail -n1` ), String )
     cnt = split( ngtsString, r"\s+" )[2]

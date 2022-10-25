@@ -25,17 +25,19 @@ chead = readchead( f )
 ```
 
 
-To read data,
+To read data, you need the ngtstat command, which was developed to handle gtool3 files.
+First pecify the directory containing the axis data files in advance in the GTAXDIR environment variable.
 
 ```
 using gtoolgl
 
 dir = "."
 varname = "occo2f"
+filename = dir * "/" * varname
 
-nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( dir, varname )
+nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( filename )
 ```
-readgtool uses opengtool.
+readgtool uses opengtool and readchead internally, and reads axis files.
 
 To write,
 ```
