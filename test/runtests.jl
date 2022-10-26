@@ -63,6 +63,28 @@ using Test
     @test packed[2] == -1985229329
     @test packed[3] == 16777216
 
+
+    # 11-bit test
+    nbit = 11
+    idata[1] = 1911  # Z'777'
+    idata[2] = 1638  # Z'666'
+    idata[3] = 1365  # Z'555'
+    idata[4] = 1092  # Z'444'
+    idata[5] = 819   # Z'333'
+    idata[6] = 546   # Z'222'
+    idata[7] = 273   # Z'111'
+    idata[8] = 0     # Z'000'
+    idata[9] = 1911  # Z'777'
+
+    packed, ilen = pack_bits_into32( idata, 9, nbit )
+
+    @test ilen == 4
+    @test packed[1] == -285631830
+    @test packed[2] == -1002019192
+    @test packed[3] == -2004352786
+    @test packed[4] == -536870912
+
+    
     # test for nbit==1
 
     nbit = 1
@@ -91,24 +113,25 @@ end
 # test2()
 @testset "test2" begin
     
-    # test for nbit = 1
-    nbit = 1
-
     nn = 5000
 
-    idata00 = zeros(Int64, nn)
+    for nbit = 1:31
+        
+        idata00 = zeros(Int64, nn)
 
-    imask = (1 <<  nbit) - 1
-    for i = 1: nn
-        idata00[i] = (i - 1) & imask
-    end
+        imask = (1 <<  nbit) - 1
+        for i = 1: nn
+            idata00[i] = (i - 1) & imask
+        end
 
-    idata01, ilen = pack_bits_into32( idata00, nn, nbit )
+        idata01, ilen = pack_bits_into32( idata00, nn, nbit )
 
-    idata02 =  unpack_bits_from32( nn, idata01, nbit )
+        idata02 =  unpack_bits_from32( nn, idata01, nbit )
 
-    for i = 1:nn
-        @test idata00[i] == idata02[i]
+        for i = 1:nn
+            @test idata00[i] == idata02[i]
+        end
+
     end
 end
   

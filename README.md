@@ -1,7 +1,7 @@
 # gtooljl
 
-This package reads and writes Gtool3 format files.
-It supports UR4 UR8 MR4 MR8 formats.
+This package is a Julia Language moduel that reads and writes Gtool3 format files.
+It supports UR4 UR8 MR4 MR8 and URY formats.
 
 # Install
 In Julia,
@@ -14,7 +14,7 @@ pkg> add https://github.com/mchwavy/gtooljl.git
 
 To read header information,
 ```
-using gtoolgl
+using gtooljl
 
 dir = "."
 varname = "occo2f"
@@ -24,22 +24,28 @@ f = opengtool( filename, "r" )
 chead = readchead( f )
 ```
 
-
-To read data,
+To read data, you need specify the directory containing the axis data files in advance in the GTAXDIR environment variable.
 
 ```
-using gtoolgl
+using gtooljl
 
 dir = "."
 varname = "occo2f"
+filename = dir * "/" * varname
 
-nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( dir, varname )
+nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( filename )
 ```
-readgtool uses opengtool.
+readgtool uses opengtool and readchead internally, and reads axis files.
+To get information on how many data are available in the time direction, readgtool uses the ngtstat command, which was developed to handle gtool3 files.
+Or you can also tell readgtool how many data to read in the time direction.
+```
+ntin = 1
+nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( filename, ntin )
+```
 
 To write,
 ```
-using gtoolgl
+using gtooljl
 
 f = opengtool( filename, "w" )
 
