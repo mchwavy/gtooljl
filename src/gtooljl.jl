@@ -164,7 +164,7 @@ function pack_bit( idata1, len_orig )
     packed1 = OffsetArrays.no_offset_view(packed0)
     return packed1, ilen
 end
-    
+
 function unpack_bits_from32( ilen, ipack1, nbit )
     bwidth = 32
     ipack0 = OffsetArray(ipack1, 0:length(ipack1)-1)
@@ -174,19 +174,25 @@ function unpack_bits_from32( ilen, ipack1, nbit )
         idata1[1:idata_size] = idata_tmp[1:idata_size]
     else
         imask = (1 << nbit ) - 1
-        nfull = Int32(ilen) >> 5
-        idata1 = zeros( Int64, (nfull-1)<<5+31+1 )
-        idata0 = OffsetArray(idata1, 0:((nfull-1)<<5 + 31))
+#        nfull = Int32(ilen) >> 5
+#        idata1 = zeros( Int64, (nfull-1)<<5+31+1 )
+#        idata0 = OffsetArray(idata1, 0:((nfull-1)<<5 + 31))
+        idata1 = zeros( Int64, ilen )
+        idata0 = OffsetArray(idata1, 0:ilen-1 )
         for i = 0: ilen - 1
             i2 = i >> 5
             i3 = i & 31 
 
-            ipos = nbit * i2 + ( nbit * i3 >> 5 )
+            ipos = nbit * i2 + ( ( nbit * i3 ) >> 5 )
             ioff = nbit + ( (nbit * i3) & 31)
 
-            ival = (ipack0[ipos] << ioff - bwidth) & imask
+            ival = ( ipack0[ipos] << (ioff - bwidth) ) & imask
             if ioff > bwidth
-                ival = ival | ( (ipack0[ipos+1] << ioff-2*bwidth) & imask )
+                if 2*bwidth > ioff
+                    ival = ival | ( ( ipack0[ipos+1] >>> ( 2 * bwidth - ioff ) ) & imask )
+                else
+                    ival = ival | ( ( ipack0[ipos+1] << ( ioff-2*bwidth ) ) & imask )
+                end
             end
 
             idata0[i] = ival
@@ -196,7 +202,6 @@ function unpack_bits_from32( ilen, ipack1, nbit )
     return idata1
 end
 
-# iflag, nmr, 1
 function pack_bits_into32( idata1, len_orig, nbit )
 
     if len_orig == 0
@@ -235,7 +240,7 @@ function pack_bits_into32( idata1, len_orig, nbit )
             ival = idata0[i] & mask
             packed064[ ip ] = packed064[ip] | ( ival << (bwidth - ioff - nbit) )
             if ioff + nbit > bwidth
-                packed064[ip+1] = packed064[ip+1] | ( ival << (2 * bwidth - ioff - nbit ) )
+                packed064[ip+1] = packed064[ip+1] | (( ival << (2 * bwidth - ioff - nbit ) ) & typemax(UInt32) )
             end
 
             ioff = ioff + nbit
@@ -326,6 +331,113 @@ function writeMR8( f, chead, nmr, gdata, miss )
     write( f, arrayout )
 end
 
+#gfxscp( gdata[:, :, k], nxy, 1 << ibit, miss )
+function gfxscp( gdatak, inum, nr, vmiss )
+    dbl_max = 1.7e+308
+    dbl_min = 2.3e-308
+
+    imiss = nr - 1
+    
+    # << get offset and scale >>
+    
+    dmin = dbl_max
+    dmax = - dbl_max
+    dmin = minimum( gdatak[ gdatak .!= vmiss ] )
+    dmax = maximum( gdatak[ gdatak .!= vmiss ] )
+#    for ij = 1: inum
+#        if gdatak[ij] != vmiss
+#            dmin = min( gdatak[ ij ], dmin )
+#            dmax = max( gdatak[ ij ], dmax )
+#        end
+#    end
+
+    dx0  = 1 / max( imiss - 1, 1 )
+    if dmax > dmin 
+        dstp = dmax * dx0 - dmin * dx0
+        dstp = max( dstp, dbl_min )
+        dstp = min( dstp, dbl_max * dx0 )
+        dxr = 1 / dstp
+    else
+        dstp = 0
+        dxr = 0
+    end
+    if ! (dmin >= 0 || dmax < 0)
+        if dmax == 0
+            dmin = dmax
+            dstp = - dstp
+            dxr = - dxr
+        else
+
+            amin = abs( dmin )
+            amax = abs( dmax )
+            if amin < amax 
+                xi = amin / amax
+            else
+                xi = amax / amin
+            end
+            if ! (xi < 1e-10)
+                i0 = floor(Int,  (imiss - 1) / (1 + amax / amin) )
+
+                if ! ( i0 == 0 || i0 == imiss - 1 )
+                    
+                    astp = real( amin / i0 )
+                    if astp == 0 then
+                        dstp = amin / i0
+                    else
+                        dstp = astp
+                    end
+                    
+                    dstp = max( dstp, dbl_min )
+                    dstp = min( dstp, dbl_max * dx0 )
+                    dxr = 1 / dstp
+                    dmin = - dstp * i0
+                end
+            end
+        end
+    end
+
+    # << scaling >>
+    gdatak1 = reshape( gdatak, inum )
+    idata = zeros( Int64, inum )
+    for ij = 1:inum
+        if gdatak1[ij] != vmiss
+            val = min( gdatak1[ ij ] - dmin, dbl_max )
+            idata[ ij ] = min( round( Int, val * dxr ), imiss - 1 )
+        else
+            idata[ ij ] = imiss
+        end
+    end
+    
+    return idata, dmin, dstp
+end
+    
+function writeURY( f, chead, nxy, nz, gdata, miss, fmt )
+
+    dma = zeros( Float64, (2, nz) )
+    ibit = 0
+    ibit = parse( Int, fmt[4:5] )
+
+    if ibit < 1
+        ibit = 1
+    end
+    if ibit > 31
+        ibit = 31
+    end
+
+    izlen = ipack32len( nxy, ibit )
+    iz = zeros( Int32, nz * nxy )
+
+    for k = 1:nz
+        idata, dma[1, k], dma[2, k] = gfxscp( gdata[:, :, k], nxy, 1 << ibit, miss )
+        iz[1+(k-1)*izlen:(k-1)*izlen+nxy], idummy = pack_bits_into32( idata, nxy, ibit )
+    end
+        
+    write( f, chead )
+    write( f, dma[ 1:2, 1:nz ]  )
+    write( f, iz[ 1:izlen*nz ] )
+
+end
+    
 function readMR4(f, nmr, miss)
     varT = fill(0.e0, nmr)
     nmsk = ipack32len( nmr, 1)
@@ -366,6 +478,40 @@ function readMR8(f, nmr, miss)
     return varT
 end
 
+function readURY( f, nxy, nz, miss, dfmt )
+
+    varT = fill(0.e0, nxy, nz)
+    nbit = 0
+    nbit = parse( Int, dfmt[4:5] )
+    if nbit < 1
+        nbit = 1
+    elseif nbit > 31
+        nbit = 31
+    end
+
+    izlen = ipack32len( nxy, nbit ) #  packed length for each z-level
+
+    dma = read( f, (Float64, 2, nz) )
+    iz = read( f, (Int32, izlen*nz) )
+
+    imiss = ( 1 << nbit ) - 1
+
+    for k = 1: nz
+        idata = unpack_bits_from32( nxy, iz[ 1 + (k-1)*izlen:k*izlen], nbit )
+
+        for i = 1: nxy
+            if idata[i] != imiss
+                varT[ i, k ] = dma[ 1, k ] + idata[ i ] * dma[ 2, k ]
+            else
+                varT[ i, k ] = miss
+            end
+        end
+    end
+
+    return varT
+end
+
+
 function readaxis( filename, direction )
     if isfile( "./" * filename )
         AxisFile = "./" * filename
@@ -375,11 +521,10 @@ function readaxis( filename, direction )
         println("Axis file ", filename, " not found in GTAXDIR.")
         exit(1)
     end
-#    fw = FortranFile( AxisFile, "r", access="sequential", convert="big-endian")
     fw = opengtool( AxisFile, "r" )
     cheadW = read(fw, (FString{16}, 64))
     dfmtW = lstrip( trimstring( cheadW[38] ), ' ')
-    if dfmtW != "UR4" && dfmtW != "UR8" && dfmtW != "MR4" && dfmtW != "MR8"
+    if dfmtW != "UR4" && dfmtW != "UR8" && dfmtW != "MR4" && dfmtW != "MR8" && dfmtW[1:3] != "URY"
         println("Format ", dfmtW,  " is not supported.\n")
         exit(1)
     end
@@ -399,6 +544,8 @@ function readaxis( filename, direction )
         axW = readMR4(fw, nw, -999.)
     elseif dfmtW == "MR8"
         axW = readMR8(fw, nw, -999.)
+    elseif dfmtW[1:3] == "URY"
+        axW = readURY(fw, nw, -999.)
     end
     close( fw )
     return axW, nw
@@ -409,20 +556,23 @@ function readchead( f )
     return chead
 end
 
-function readgtool( filename )
+function readgtool( filename, ntin::Int64=0 )
 
 #    filename = dir * "/" * varname
 
-    ngtsString = read( pipeline( `ngtstat $filename` , `tail -n1` ), String )
-    cnt = split( ngtsString, r"\s+" )[2]
-    nt = parse( Int64, cnt )
+    if ntin == 0
+        ngtsString = read( pipeline( `ngtstat $filename` , `tail -n1` ), String )
+        cnt = split( ngtsString, r"\s+" )[2]
+        nt = parse( Int64, cnt )
+    else
+        nt = ntin
+    end
 
-#    f = FortranFile( filename, "r", access="sequential", convert="big-endian" )
     f = opengtool( filename, "r" )
     chead = read(f, (FString{16}, 64) )
 
     dfmt = lstrip( trimstring( chead[38] ), ' ')
-    if dfmt != "UR4" && dfmt != "UR8" && dfmt != "MR4" && dfmt != "MR8"
+    if dfmt != "UR4" && dfmt != "UR8" && dfmt != "MR4" && dfmt != "MR8" && dfmt[1:3] != "URY"
         println("Format ", dfmt,  " is not supported.\n")
         exit(1)
     end
@@ -472,6 +622,14 @@ function readgtool( filename )
                 varXY = read(f, (Float64, (nx, ny)))
             else
                 varXYZ = read(f, (Float64, (nx, ny, nz) ) )
+            end
+        elseif dfmt[1:3] == "URY"
+            nxy = nx*ny
+            varT1 = readURY(f, nxy, nz, miss, dfmt)
+            if nz == 1
+                varXY = collect( reshape( varT1, nx, ny ))
+            else
+                varXYZ = collect( reshape( varT1, nx, ny, nz ))
             end
         elseif dfmt == "MR4"
             nmr = nx*ny*nz
@@ -533,6 +691,11 @@ function writegtool( f, chead, fmt, arraytmp )
         chead[38]=@sprintf("%-16s", "MR8")
         nmr = length( arraytmp )
         writeMR8( f, chead, nmr, arraytmp, miss )
+    elseif fmt[1:3] == "URY"
+        chead[38]=@sprintf("%-16s", fmt)
+        nxy = size( arraytmp, 1 ) * size( arraytmp, 2)
+        nz = size( arraytmp, 3 )
+        writeURY( f, chead, nxy, nz, arraytmp, miss, fmt )
     else
         println("Output data format ", fmt, " is not supported.")
         exit(1)

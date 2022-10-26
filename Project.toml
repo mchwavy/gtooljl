@@ -1,7 +1,7 @@
 name = "gtooljl"
 uuid = "bcda1919-fcfd-487f-a53c-9b4ae3999c2d"
 authors = ["Michio Watanabe"]
-version = "0.1.2"
+version = "0.2.0"
 
 [deps]
 FortranFiles = "c58ffaec-ab22-586d-bfc5-781a99fd0b10"
