@@ -1,6 +1,6 @@
 module gtooljl
 
-export opengtool, closegtool, writegtool, readgtool, readaxis, readchead, ipack32len, unpack_bits_from32, unpack_bit, pack_bits_into32, assert, gtooltime2datetime
+export opengtool, closegtool, writegtool, readgtool, readaxis, readchead, ipack32len, unpack_bits_from32, unpack_bit, pack_bits_into32, assert, gtooltime2datetime, datetime2gtooltime
 
 using FortranFiles
 using OffsetArrays
@@ -715,8 +715,14 @@ end
 function gtooltime2datetime( timev )
     # Gtoole time is in hour since 0000-01-01T00:00:00
     # Julia time is in day since 0000-12-31T00:00:00 (Yr 0000 has 366 days)
-    date = rata2datetime(floor(Int64, (timev-365*24)/24)) + Hour( round( Int, mod((timev-365*24)/24, 1)*24 ) )
-    return date
+    datev = rata2datetime(floor(Int64, (timev-365*24)/24)) + Hour( round( Int, mod((timev-365*24)/24, 1)*24 ) )
+    return datev
+end
+
+function datetime2gtooltime( datev )
+    # datev = Dates( YYYY, MM, DD, HH, MM, SS )
+    timev = datetime2rata( datev + Dates.Hour(365*24) ) * 24 + Dates.value( Dates.Hour( datev ) )
+    return timev
 end
 
 end # module gtool

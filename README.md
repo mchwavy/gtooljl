@@ -66,6 +66,12 @@ To convert time data in gtool format file to DateTime, call gtooltime2datetime:
 date = gtooltime2datetime( tarray[1] )
 date = gtooltime2datetime.( tarray )
 ```
+To convert time data in DateTime to gtool format, call datetime2gtooltime:
+```
+d = DateTime(0001,1,1,0,0,0)
+t = datetime2gtooltime( d )
+```
+
 
 [![Build Status](https://travis-ci.com/mchwavy/gtooljl.jl.svg?branch=main)](https://travis-ci.com/mchwavy/gtooljl.jl)
 [![Coverage](https://codecov.io/gh/mchwavy/gtooljl.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/mchwavy/gtooljl.jl)
