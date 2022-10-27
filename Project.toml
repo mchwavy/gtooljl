@@ -1,7 +1,7 @@
 name = "gtooljl"
 uuid = "bcda1919-fcfd-487f-a53c-9b4ae3999c2d"
 authors = ["Michio Watanabe"]
-version = "0.3.2"
+version = "0.3.3"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
