@@ -61,6 +61,10 @@ end
 closegtool( f )
 ```
 
+To convert time data in gtool format file to DateTime, call gtooltime2datetime:
+```
+date = gtooltime2datetime( tarray[1] )
+```
 
 [![Build Status](https://travis-ci.com/mchwavy/gtooljl.jl.svg?branch=main)](https://travis-ci.com/mchwavy/gtooljl.jl)
 [![Coverage](https://codecov.io/gh/mchwavy/gtooljl.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/mchwavy/gtooljl.jl)

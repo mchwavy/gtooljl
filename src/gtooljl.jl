@@ -1,10 +1,11 @@
 module gtooljl
 
-export opengtool, closegtool, writegtool, readgtool, readaxis, readchead, ipack32len, unpack_bits_from32, unpack_bit, pack_bits_into32, assert
+export opengtool, closegtool, writegtool, readgtool, readaxis, readchead, ipack32len, unpack_bits_from32, unpack_bit, pack_bits_into32, assert, gtooltime2datetime
 
 using FortranFiles
 using OffsetArrays
 using Printf
+using Dates
 
 function assert( in1, in2, process )
     if in1 != in2
@@ -709,6 +710,13 @@ end
 
 function closegtool( f )
     close( f )
+end
+
+function gtooltime2datetime( time )
+    # Gtoole time is in hour since 0000-01-01T00:00:00
+    # Julia time is in day since 0000-12-31T00:00:00 (Yr 0000 has 366 days)
+    date = rata2datetime(floor(Int64, (time-365*24)/24)) + Hour(mod((time-365*24)/24, 1)*24)
+    return date
 end
 
 end # module gtool
