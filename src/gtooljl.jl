@@ -604,7 +604,7 @@ function readgtool( filename, ntin::Int64=0 )
         varXYZ = fill(0.e0, nx, ny, nz)
         varXYZT = fill(0.e0, nx, ny, nz, nt)
     end
-    tarray = fill(0.e0, nt)
+    tarray = Vector{Int}(undef, nt)
     
     rewind( f )
 

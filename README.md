@@ -1,6 +1,6 @@
 # gtooljl
 
-This package is a Julia Language moduel that reads and writes Gtool3 format files.
+This package is a Julia Language module that reads and writes Gtool3 format files.
 It supports UR4 UR8 MR4 MR8 and URY formats.
 
 # Install
@@ -64,6 +64,7 @@ closegtool( f )
 To convert time data in gtool format file to DateTime, call gtooltime2datetime:
 ```
 date = gtooltime2datetime( tarray[1] )
+date = gtooltime2datetime.( tarray )
 ```
 
 [![Build Status](https://travis-ci.com/mchwavy/gtooljl.jl.svg?branch=main)](https://travis-ci.com/mchwavy/gtooljl.jl)
