@@ -747,7 +747,7 @@ function closegtool( f::FortranFile )
     close( f )
 end
 
-function gtooltime2datetime( timev::Int64 )
+function gtooltime2datetime( timev )
     # Gtoole time is in hour since 0000-01-01T00:00:00
     # Julia time is in day since 0000-12-31T00:00:00 (Yr 0000 has 366 days)
     datev = rata2datetime(floor(Int64, (timev-365*24)/24)) + Hour( round( Int, mod((timev-365*24)/24, 1)*24 ) )
