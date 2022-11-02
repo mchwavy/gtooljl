@@ -479,7 +479,7 @@ function readMR8( f::FortranFile, nmr::Int64, miss::Float64 )
     return varT
 end
 
-function readURY( f::FortranFile, nxy::Int64, nz::Int64, miss::Float64, dfmt::String )
+function readURY( f::FortranFile, nxy::Int64, nz::Int64, miss::Float64, dfmt )
 
     varT = fill(0.e0, nxy, nz)
     nbit = 0
