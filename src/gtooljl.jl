@@ -1,6 +1,6 @@
 module gtooljl
 
-export opengtool, closegtool, writegtool, readgtool, readaxis, readchead, ipack32len, unpack_bits_from32, unpack_bit, pack_bits_into32, assert, gtooltime2datetime, datetime2gtooltime
+export opengtool, closegtool, writegtool, gtoolarraysize, readgtool, readaxis, readchead, ipack32len, unpack_bits_from32, unpack_bit, pack_bits_into32, assert, gtooltime2datetime, datetime2gtooltime
 
 using FortranFiles
 using OffsetArrays
@@ -703,6 +703,44 @@ function writegtool( f, chead, fmt, arraytmp )
     end
 
 end 
+
+function gtoolarraysize( filename, ntin::Int64=0 )
+
+    if ntin == 0
+        ngtsString = read( pipeline( `ngtstat $filename` , `tail -n1` ), String )
+        cnt = split( ngtsString, r"\s+" )[2]
+        nt = parse( Int64, cnt )
+    else
+        nt = ntin
+    end
+
+    f = opengtool( filename, "r" )
+    chead = read(f, (FString{16}, 64) )
+
+    dfmt = lstrip( trimstring( chead[38] ), ' ')
+    if dfmt != "UR4" && dfmt != "UR8" && dfmt != "MR4" && dfmt != "MR8" && dfmt[1:3] != "URY"
+        println("Format ", dfmt,  " is not supported.\n")
+        exit(1)
+    end
+
+    # X
+    sc = lstrip( trimstring( chead[29] ), ' ')
+    filename = "GTAXLOC." * sc
+    lon, nx = readaxis( filename, "lon" )
+
+    # Y
+    sc = lstrip( trimstring( chead[32] ), ' ')
+    filename = "GTAXLOC." * sc
+    lat, ny = readaxis( filename, "lat" )
+
+    # Z
+    sc = lstrip( trimstring( chead[35] ), ' ')
+    filename = "GTAXLOC." * sc
+    dep, nz = readaxis( filename, "dep" )
+
+    return nx, ny, nz, nt
+
+end
 
 function opengtool( filename, mode )
     f = FortranFile( filename, mode, access="sequential", convert="big-endian" )

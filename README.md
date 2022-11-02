@@ -43,6 +43,11 @@ ntin = 1
 nx, ny, nz, nt, lon, lat, dep, tarray, array = readgtool( filename, ntin )
 ```
 
+To obtain the size of an array in gtool file,
+```
+nx, ny, nz, nt = gtoolarraysize( filename, 1 )
+```
+
 To write,
 ```
 using gtooljl
