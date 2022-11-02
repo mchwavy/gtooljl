@@ -65,6 +65,11 @@ end
 
 closegtool( f )
 ```
+The type of chead is Vector{FString{16}} and chead can be initialized as:
+```
+chead=Vector{FString{16}}(undef, 64)
+```
+
 
 To convert time data in gtool format file to DateTime, call gtooltime2datetime:
 ```

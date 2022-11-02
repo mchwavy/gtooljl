@@ -86,7 +86,7 @@ function unpack_bit( ilen::Int64, ipack1 )
     return idata1, id1size
 end
 
-function pack_bit( idata1, len_orig::Int64 )
+function pack_bit( idata1::Vector{Int64}, len_orig::Int64 )
 
     width = 32
     mask = 1
@@ -166,7 +166,7 @@ function pack_bit( idata1, len_orig::Int64 )
     return packed1, ilen
 end
 
-function unpack_bits_from32( ilen::Int64, ipack1, nbit::Int64 )
+function unpack_bits_from32( ilen::Int64, ipack1::Vector{Int32}, nbit::Int64 )
     bwidth = 32
     ipack0 = OffsetArray(ipack1, 0:length(ipack1)-1)
     if nbit == 1
@@ -203,7 +203,7 @@ function unpack_bits_from32( ilen::Int64, ipack1, nbit::Int64 )
     return idata1
 end
 
-function pack_bits_into32( idata1, len_orig::Int64, nbit::Int64 )
+function pack_bits_into32( idata1::Vector{Int64}, len_orig::Int64, nbit::Int64 )
 
     if len_orig == 0
         println("Do nothing for 0-length input in pack_bits_into32.")
@@ -280,7 +280,7 @@ function pack_bits_into32( idata1, len_orig::Int64, nbit::Int64 )
     return packed1, ilen
 end
 
-function writeMR4( f::FortranFile, chead, nmr::Int64, gdata, miss::Float64 )
+function writeMR4( f::FortranFile, chead::Vector{FString{16}}, nmr::Int64, gdata, miss::Float64 )
     gmskd = zeros( Float32, nmr )
     imsk = zeros( Int32, nmr )
     iflag = zeros( Int64, nmr )
@@ -306,7 +306,7 @@ function writeMR4( f::FortranFile, chead, nmr::Int64, gdata, miss::Float64 )
     write( f, arrayout )
 end
 
-function writeMR8( f::FortranFile, chead, nmr::Int64, gdata, miss::Float64 )
+function writeMR8( f::FortranFile, chead::Vector{FString{16}}, nmr::Int64, gdata, miss::Float64 )
     gmskd = zeros( Float64, nmr )
     imsk = zeros( Int32, nmr )
     iflag = zeros( Int64, nmr )
@@ -412,7 +412,7 @@ function gfxscp( gdatak, inum::Int64, nr::Int64, vmiss::Float64 )
     return idata, dmin, dstp
 end
     
-function writeURY( f::FortranFile, chead, nxy::Int64, nz::Int64, gdata, miss::Float64, fmt::String )
+function writeURY( f::FortranFile, chead::Vector{FString{16}}, nxy::Int64, nz::Int64, gdata, miss::Float64, fmt::String )
 
     dma = zeros( Float64, (2, nz) )
     ibit = 0
@@ -546,7 +546,7 @@ function readaxis( filename::String, direction::String )
     elseif dfmtW == "MR8"
         axW = readMR8(fw, nw, -999.)
     elseif dfmtW[1:3] == "URY"
-        axW = readURY(fw, nw, -999.)
+        axW = readURY(fw, nw, 1, -999., dfmt)
     end
     close( fw )
     return axW, nw
@@ -669,7 +669,7 @@ function readgtool( filename::String, ntin::Int64=0 )
 
 end 
 
-function writegtool( f::FortranFile, chead, fmt::String, arraytmp )
+function writegtool( f::FortranFile, chead::Vector{FString{16}}, fmt::String, arraytmp )
 
     sc = lstrip( trimstring( chead[39] ), ' ')
     miss = parse( Float64, sc)
@@ -747,14 +747,14 @@ function closegtool( f::FortranFile )
     close( f )
 end
 
-function gtooltime2datetime( timev )
+function gtooltime2datetime( timev::Int64 )
     # Gtoole time is in hour since 0000-01-01T00:00:00
     # Julia time is in day since 0000-12-31T00:00:00 (Yr 0000 has 366 days)
     datev = rata2datetime(floor(Int64, (timev-365*24)/24)) + Hour( round( Int, mod((timev-365*24)/24, 1)*24 ) )
     return datev
 end
 
-function datetime2gtooltime( datev )
+function datetime2gtooltime( datev::DateTime )
     # datev = Dates( YYYY, MM, DD, HH, MM, SS )
     timev = datetime2rata( datev + Dates.Hour(365*24) ) * 24 + Dates.value( Dates.Hour( datev ) )
     return timev
