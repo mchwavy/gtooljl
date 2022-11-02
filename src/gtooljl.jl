@@ -14,7 +14,7 @@ function assert( in1, in2, process )
     end
 end
 
-function ipack32len( len_orig, nbit )
+function ipack32len( len_orig::Int64, nbit::Int64 )
 
     bwidth = 32
 
@@ -22,7 +22,7 @@ function ipack32len( len_orig, nbit )
     return len
 end
 
-function unpack_bit( ilen, ipack1 )
+function unpack_bit( ilen::Int64, ipack1 )
 
     ipack0 = OffsetArray(ipack1, 0:length(ipack1)-1)
 
@@ -86,7 +86,7 @@ function unpack_bit( ilen, ipack1 )
     return idata1, id1size
 end
 
-function pack_bit( idata1, len_orig )
+function pack_bit( idata1, len_orig::Int64 )
 
     width = 32
     mask = 1
@@ -166,7 +166,7 @@ function pack_bit( idata1, len_orig )
     return packed1, ilen
 end
 
-function unpack_bits_from32( ilen, ipack1, nbit )
+function unpack_bits_from32( ilen::Int64, ipack1, nbit::Int64 )
     bwidth = 32
     ipack0 = OffsetArray(ipack1, 0:length(ipack1)-1)
     if nbit == 1
@@ -203,7 +203,7 @@ function unpack_bits_from32( ilen, ipack1, nbit )
     return idata1
 end
 
-function pack_bits_into32( idata1, len_orig, nbit )
+function pack_bits_into32( idata1, len_orig::Int64, nbit::Int64 )
 
     if len_orig == 0
         println("Do nothing for 0-length input in pack_bits_into32.")
@@ -280,7 +280,7 @@ function pack_bits_into32( idata1, len_orig, nbit )
     return packed1, ilen
 end
 
-function writeMR4( f, chead, nmr, gdata, miss )
+function writeMR4( f::FortranFile, chead, nmr::Int64, gdata, miss::Float64 )
     gmskd = zeros( Float32, nmr )
     imsk = zeros( Int32, nmr )
     iflag = zeros( Int64, nmr )
@@ -306,7 +306,7 @@ function writeMR4( f, chead, nmr, gdata, miss )
     write( f, arrayout )
 end
 
-function writeMR8( f, chead, nmr, gdata, miss )
+function writeMR8( f::FortranFile, chead, nmr::Int64, gdata, miss::Float64 )
     gmskd = zeros( Float64, nmr )
     imsk = zeros( Int32, nmr )
     iflag = zeros( Int64, nmr )
@@ -333,7 +333,7 @@ function writeMR8( f, chead, nmr, gdata, miss )
 end
 
 #gfxscp( gdata[:, :, k], nxy, 1 << ibit, miss )
-function gfxscp( gdatak, inum, nr, vmiss )
+function gfxscp( gdatak, inum::Int64, nr::Int64, vmiss::Float64 )
     dbl_max = 1.7e+308
     dbl_min = 2.3e-308
 
@@ -412,7 +412,7 @@ function gfxscp( gdatak, inum, nr, vmiss )
     return idata, dmin, dstp
 end
     
-function writeURY( f, chead, nxy, nz, gdata, miss, fmt )
+function writeURY( f::FortranFile, chead, nxy::Int64, nz::Int64, gdata, miss::Float64, fmt::String )
 
     dma = zeros( Float64, (2, nz) )
     ibit = 0
@@ -439,7 +439,7 @@ function writeURY( f, chead, nxy, nz, gdata, miss, fmt )
 
 end
     
-function readMR4(f, nmr, miss)
+function readMR4( f::FortranFile, nmr::Int64, miss::Float64 )
     varT = fill(0.e0, nmr)
     nmsk = ipack32len( nmr, 1)
     ntmp = read(f, (Int32, 1) )
@@ -459,7 +459,7 @@ function readMR4(f, nmr, miss)
     return varT
 end
 
-function readMR8(f, nmr, miss)
+function readMR8( f::FortranFile, nmr::Int64, miss::Float64 )
     varT = fill(0.e0, nmr)
     nmsk = ipack32len( nmr, 1)
     ntmp = read(f, (Int32, 1) )
@@ -479,7 +479,7 @@ function readMR8(f, nmr, miss)
     return varT
 end
 
-function readURY( f, nxy, nz, miss, dfmt )
+function readURY( f::FortranFile, nxy::Int64, nz::Int64, miss::Float64, dfmt::String )
 
     varT = fill(0.e0, nxy, nz)
     nbit = 0
@@ -513,7 +513,7 @@ function readURY( f, nxy, nz, miss, dfmt )
 end
 
 
-function readaxis( filename, direction )
+function readaxis( filename::String, direction::String )
     if isfile( "./" * filename )
         AxisFile = "./" * filename
     elseif isfile( ENV["GTAXDIR"] * "/" * filename )
@@ -552,12 +552,12 @@ function readaxis( filename, direction )
     return axW, nw
 end
 
-function readchead( f )
+function readchead( f::FortranFile )
     chead = read(f, (FString{16}, 64) )
     return chead
 end
 
-function readgtool( filename, ntin::Int64=0 )
+function readgtool( filename::String, ntin::Int64=0 )
 
 #    filename = dir * "/" * varname
 
@@ -669,7 +669,7 @@ function readgtool( filename, ntin::Int64=0 )
 
 end 
 
-function writegtool( f, chead, fmt, arraytmp )
+function writegtool( f::FortranFile, chead, fmt::String, arraytmp )
 
     sc = lstrip( trimstring( chead[39] ), ' ')
     miss = parse( Float64, sc)
@@ -704,7 +704,7 @@ function writegtool( f, chead, fmt, arraytmp )
 
 end 
 
-function gtoolarraysize( filename, ntin::Int64=0 )
+function gtoolarraysize( filename::String, ntin::Int64=0 )
 
     if ntin == 0
         ngtsString = read( pipeline( `ngtstat $filename` , `tail -n1` ), String )
@@ -724,29 +724,26 @@ function gtoolarraysize( filename, ntin::Int64=0 )
     end
 
     # X
-    sc = lstrip( trimstring( chead[29] ), ' ')
-    filename = "GTAXLOC." * sc
-    lon, nx = readaxis( filename, "lon" )
+    sc = lstrip( trimstring( chead[31] ), ' ')
+    nx = parse( Int64, sc )
 
     # Y
-    sc = lstrip( trimstring( chead[32] ), ' ')
-    filename = "GTAXLOC." * sc
-    lat, ny = readaxis( filename, "lat" )
+    sc = lstrip( trimstring( chead[34] ), ' ')
+    ny = parse( Int64, sc )
 
     # Z
-    sc = lstrip( trimstring( chead[35] ), ' ')
-    filename = "GTAXLOC." * sc
-    dep, nz = readaxis( filename, "dep" )
+    sc = lstrip( trimstring( chead[37] ), ' ')
+    nz = parse( Int64, sc )
 
     return nx, ny, nz, nt
 
 end
 
-function opengtool( filename, mode )
+function opengtool( filename::String, mode::String )
     f = FortranFile( filename, mode, access="sequential", convert="big-endian" )
 end
 
-function closegtool( f )
+function closegtool( f::FortranFile )
     close( f )
 end
 
