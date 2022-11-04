@@ -559,8 +559,6 @@ end
 
 function readgtool( filename::String, ntin::Int64=0 )
 
-#    filename = dir * "/" * varname
-
     if ntin == 0
         ngtsString = read( pipeline( `ngtstat $filename` , `tail -n1` ), String )
         cnt = split( ngtsString, r"\s+" )[2]
@@ -598,11 +596,11 @@ function readgtool( filename::String, ntin::Int64=0 )
     miss = parse( Float64, sc)
 
     if nz == 1
-        varXY = fill(0.e0, nx, ny)
-        varXYT = fill(0.e0, nx, ny, nt)
+        varStep = Array{Float64}(undef, (nx, ny))
+        varReturn = Array{Float64}(undef, (nx, ny, 0))
     else
-        varXYZ = fill(0.e0, nx, ny, nz)
-        varXYZT = fill(0.e0, nx, ny, nz, nt)
+        varStep = Array{Float64}(undef, (nx, ny, nz))
+        varReturn = Array{Float64}(undef, (nx, ny, nz, 0))
     end
     tarray = Vector{Int}(undef, nt)
     
@@ -614,55 +612,49 @@ function readgtool( filename::String, ntin::Int64=0 )
         tarray[it] = parse( Int64, sc )
         if dfmt == "UR4"
             if nz == 1
-                varXY = read(f, (Float32, (nx, ny)))
+                varStep = read(f, (Float32, (nx, ny)))
             else
-                varXYZ = read(f, (Float32, (nx, ny, nz) ) )
+                varStep = read(f, (Float32, (nx, ny, nz) ) )
             end
         elseif dfmt == "UR8"
             if nz == 1
-                varXY = read(f, (Float64, (nx, ny)))
+                varStep = read(f, (Float64, (nx, ny)))
             else
-                varXYZ = read(f, (Float64, (nx, ny, nz) ) )
+                varStep = read(f, (Float64, (nx, ny, nz) ) )
             end
         elseif dfmt[1:3] == "URY"
             nxy = nx*ny
             varT1 = readURY(f, nxy, nz, miss, dfmt)
             if nz == 1
-                varXY = collect( reshape( varT1, nx, ny ))
+                varStep = collect( reshape( varT1, nx, ny ))
             else
-                varXYZ = collect( reshape( varT1, nx, ny, nz ))
+                varStep = collect( reshape( varT1, nx, ny, nz ))
             end
         elseif dfmt == "MR4"
             nmr = nx*ny*nz
             varT1 = readMR4(f, nmr, miss)
             if nz == 1
-                varXY = collect( reshape( varT1, nx, ny ))
+                varStep = collect( reshape( varT1, nx, ny ))
             else
-                varXYZ = collect( reshape( varT1, nx, ny, nz ))
+                varStep = collect( reshape( varT1, nx, ny, nz ))
             end
         elseif dfmt == "MR8"
             nmr = nx*ny*nz
             varT1 = readMR8(f, nmr, miss)
             if nz == 1
-                varXY = collect( reshape( varT1, nx, ny ))
+                varStep = collect( reshape( varT1, nx, ny ))
             else
-                varXYZ = collect( reshape( varT1, nx, ny, nz ))
+                varStep = collect( reshape( varT1, nx, ny, nz ))
             end
         end
         if nz == 1
-            varXYT[:, :, it]   = varXY[:, :]
+            varReturn = cat( varReturn, varStep; dims=3 )
         else
-            varXYZT[:, :, :, it]   = varXYZ[:, :, :]
+            varReturn = cat( varReturn, varStep; dims=4 )
         end
     end
 
-    if nz==1
-        varXYT = replace!( varXYT, miss => NaN )
-        varReturn = varXYT
-    else
-        varXYZT = replace!( varXYZT, miss => NaN )
-        varReturn = varXYZT
-    end
+    varReturn = replace!( varReturn, miss => NaN )
 
     close( f )
     return nx, ny, nz, nt, lon, lat, dep, tarray, varReturn
